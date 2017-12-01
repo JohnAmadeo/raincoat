@@ -2,6 +2,9 @@ from bs4 import BeautifulSoup
 import urllib
 import re
 import requests
+import os
+from urllib import parse
+import psycopg2
 
 def get_urls():
 	r1 = urllib.urlopen('http://www.imdb.com/chart/top').read()
@@ -107,8 +110,27 @@ def parse_url(url):
 		print "TOP 5 ACTORS: "
 		print top_five_actors
 
+def connect_to_db():
+	db_url = "postgres://flnagkaphunlzd:58d06cddda4a7bb84af165d0e61a1268fa8d6bdb13fc401f0d999487203a504e@ec2-174-129-227-116.compute-1.amazonaws.com:5432/dddk3nffa4e1qb"
+	parse.uses_netloc.append("postgres")
+	url = parse.urlparse(db_url)
+
+	conn = psycopg2.connect(
+	    database=url.path[1:],
+	    user=url.username,
+	    password=url.password,
+	    host=url.hostname,
+	    port=url.port
+	)
+
+	# example
+	cur = conn.cursor()
+
+	cur.execute("SELECT * FROM test;")
+	print (cur.fetchone())
 
 # MAIN CALL
 urls = get_urls()
 for url in urls:
 	parse_url(url)
+connect_to_db()
