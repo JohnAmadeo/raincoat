@@ -70,7 +70,7 @@ while(repeat==True):
     msg=("Your budget is now $"+str(budget)+".\n"+
         remainingMoney(spent, budget))
     msgbox(msg)
-    pickedIDs=[0]*4
+    pickedIDs=[0]*5
     #Director
     repeatDirector=True
     while (repeatDirector==True):
