@@ -4,12 +4,15 @@ from easygui import *
 def getPriceForGenre(genre):
     return len(genre)*10
 
+#returns a list containing all possible genres
 def getGenres():
     return ["Romance", "Tragedy", "Comedy"]
 
+#returns a list of all possible directors given the budget remBudget
 def getDirectors(remBudget):
     return ["Wes Anderson", "Spike Lee", "Tommy Wiseau"]
 
+#returns a list of all possible actors given the budget remBudget
 def getActors(remBudget):
     if remBudget<=0:
         return []
@@ -17,12 +20,15 @@ def getActors(remBudget):
         return ["Millie Bobbie Brown"]
     return ["Millie Bobbie Brown", "Elizabeth Taylor", "Cary Grant"]
 
+#returns a list of all tuples (id, movie) for each person of the given name
+#given the budget remBudget
 def getPersonID(name, remBudget):
     if(name=="Millie Bobbie Brown"):
         return [(1, "Stranger Things"), (2, "Death")]
     else:
         return [(3, "Goonies")]
 
+#given an id, return that person's cost
 def getPersonPrice(idNum):
     if (idNum==1):
         return 10
@@ -31,6 +37,7 @@ def getPersonPrice(idNum):
     if (idNum==3):
         return 30
 
+#Generates a bar showing how much money remains
 def remainingMoney(spent, budget):
     barlen=30
     returnString="$0 ["
@@ -43,17 +50,26 @@ def remainingMoney(spent, budget):
     returnString=returnString+"] $"+str(budget)
     return returnString
 
+#returns the metascore constribution of the person with the given id
+#dir=0 means actor, and 1=director
+#if the SQL function return is empty, return this function should return 0
 def ratingM(id, dir):
     return 20
     #if the return is empty, return 0
 
+#returns the IMDB constribution of the person with the given id
+#dir=0 means actor, and 1=director
+#if the SQL function return is empty, return this function should return 0
 def ratingI(id, dir):
     return 2
 #if the return is empty, return 0
 
+#returns the revenue contribution of the person with the given id
+#dir=0 means actor, and 1=director
+#if the SQL function return is empty, return this function should return 0
 def revenue(id, dir):
     return 200
-#if the return is empty, return 0
+
 
 repeat=True
 while(repeat==True):
@@ -63,7 +79,6 @@ while(repeat==True):
     genreChoice=None
     while(genreChoice==None):
         genreChoice=choicebox(msg, title, genres) #genre selection
-        #print(genreChoice)
 
     budget=getPriceForGenre(genreChoice)
     spent=0
@@ -94,7 +109,7 @@ while(repeat==True):
         "You will have $"+str(budget-price-spent)+" remaining.\n"+
         remainingMoney(spent+price, budget)+"\n"+
         "Are you sure you want to hire this director?")
-        repeatDirector= not ccbox(msg, "Confirm Director")
+        repeatDirector= not ynbox(msg, "Confirm Director")
         if(not repeatDirector):
             spent=spent+price
 
@@ -114,7 +129,6 @@ while(repeat==True):
             while(actorChoice is None):
                 actorChoice=choicebox(msg, title, actors) #director selection
             idList=getPersonID(actorChoice, budget-spent)
-            #print(str(idList)+""+actorChoice)
             if (len(idList)>1):
                 movies=[tuple[1] for tuple in idList]
                 msg=("There are multiple actors named "+actorChoice+
@@ -129,13 +143,12 @@ while(repeat==True):
             "You will have $"+str(budget-price-spent)+" remaining.\n"+
             remainingMoney(spent+price, budget)+"\n"+
             "Are you sure you want to hire this actor?")
-            repeatActor= not ccbox(msg, "Confirm Actor")
+            repeatActor= not ynbox(msg, "Confirm Actor")
             if(not repeatActor):
                 spent=spent+price
                 actorSel[count]=actorChoice
         count=count+1
     #Results
-    print(pickedIDs)
     imdbRating=ratingI(pickedIDs[0], 1)+ratingI(pickedIDs[1], 0)+ratingI(pickedIDs[2], 0)+ratingI(pickedIDs[3], 0)
     metaRating=ratingM(pickedIDs[0], 1)+ratingM(pickedIDs[1], 0)+ratingM(pickedIDs[2], 0)+ratingM(pickedIDs[3], 0)
     revenue=revenue(pickedIDs[0], 1)+revenue(pickedIDs[1], 0)+revenue(pickedIDs[2], 0)+revenue(pickedIDs[3], 0)
