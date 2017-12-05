@@ -6,6 +6,18 @@ import os
 import urlparse
 import psycopg2
 
+db_url = "postgres://flnagkaphunlzd:58d06cddda4a7bb84af165d0e61a1268fa8d6bdb13fc401f0d999487203a504e@ec2-174-129-227-116.compute-1.amazonaws.com:5432/dddk3nffa4e1qb"
+urlparse.uses_netloc.append("postgres")
+url = urlparse.urlparse(db_url)
+
+conn = psycopg2.connect(
+    database=url.path[1:],
+    user=url.username,
+    password=url.password,
+    host=url.hostname,
+    port=url.port
+)
+
 num_movies = 0
 metacritic_scores = []
 imdb_scores = []
@@ -21,7 +33,7 @@ def get_urls():
 	global num_movies
 	r1 = urllib.urlopen('http://www.imdb.com/chart/top').read()
 	soup1 = BeautifulSoup(r1, 'html.parser')
-	
+
 	movie_entries = soup1.findAll("td", "titleColumn")
 	urls = []
 	for movie in movie_entries:
@@ -168,29 +180,98 @@ def print_results():
 		if actors[x]:
 			print "TOP 5 ACTORS: "
 			print actors[x]
-			
+
 def connect_to_db():
-	db_url = "postgres://flnagkaphunlzd:58d06cddda4a7bb84af165d0e61a1268fa8d6bdb13fc401f0d999487203a504e@ec2-174-129-227-116.compute-1.amazonaws.com:5432/dddk3nffa4e1qb"
-	urlparse.uses_netloc.append("postgres")
-	url = urlparse.urlparse(db_url)
-
-	conn = psycopg2.connect(
-	    database=url.path[1:],
-	    user=url.username,
-	    password=url.password,
-	    host=url.hostname,
-	    port=url.port
-	)
-
+	pass
 	# example
+	# cur = conn.cursor()
+    #
+	# cur.execute("SELECT * FROM test;")
+	# print (cur.fetchone())
+
+	# need to call conn.commit() for write operations to take effect permanently
+
+def some_null(l):
+	for elem in l:
+		if not elem:
+			return True
+	return False
+
+def add_to_db():
 	cur = conn.cursor()
 
-	cur.execute("SELECT * FROM test;")
-	print (cur.fetchone())
+	# remove movies with null fields
+	clean_idx = set()
+	# for i in range(10):
+	for i in range(num_movies):
+		movie_name, movie_ID = movies[i]
+		director_ID = directors[i][1]
+		metacritic_score = metacritic_scores[i]
+		imdb_score = imdb_scores[i]
+		gross = grosses[i]
+		budget = budgets[i]
+		if not some_null([movie_name, movie_ID, director_ID, metacritic_score, imdb_score, gross, budget]):
+			clean_idx.add(i)
+
+
+	actor_seen = set()
+	for i, top_five_actors in enumerate(actors):
+		if i not in clean_idx:
+			continue
+
+		for name, ID in top_five_actors:
+			if ID not in actor_seen:
+				cur.execute("INSERT INTO Actor VALUES (%s, %s);",
+							(int(ID), name))
+			actor_seen.add(ID)
+
+	director_seen = set()
+	for i, director in enumerate(directors):
+		if i not in clean_idx:
+			continue
+
+		name, ID = director
+		if ID not in director_seen:
+			cur.execute("INSERT INTO Director VALUES (%s, %s)",
+						(int(ID), name))
+			director_seen.add(ID)
+
+	for i in range(num_movies):
+	# for i in range(10):
+		if i not in clean_idx:
+			continue
+		movie_name, movie_ID = movies[i]
+		# actors[i] is top five actors for this movie
+		for actor_name, actor_ID in actors[i]:
+			cur.execute("INSERT INTO Stars VALUES (%s, %s)",
+						(int(actor_ID), int(movie_ID)))
+
+		genre = genres[i]
+		cur.execute("INSERT INTO Genre VALUES (%s, %s)",
+					(genre, int(movie_ID)))
+
+		cur.execute("INSERT INTO Movie VALUES (%s, %s, %s, %s, %s, %s, %s)",
+					(int(movie_ID), movie_name, int(directors[i][1]),
+					int(metacritic_scores[i]), float(imdb_scores[i]),
+					int(grosses[i]), int(budgets[i])))
+
+	# cur.execute("SELECT * FROM Movie;")
+
+	# res = cur.fetchall()
+	# print '==========' + str(len(res)) + '=========='
+	# print res
+
+	conn.commit()
+
+
+
+	print 'test is done'
 
 # MAIN CALL
 urls = get_urls()
 for url in urls:
 	parse_url(url)
 connect_to_db()
-print_results()
+# print_results()
+
+add_to_db()
