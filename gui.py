@@ -54,7 +54,7 @@ while (repeatDirector==True):
         spent=spent+price
 
 count=1
-actorSel=[""]*5
+actorSel=[" "]*4
 for x in range (0, 3):
     repeatActor=True
     while (repeatActor==True):
@@ -73,9 +73,9 @@ for x in range (0, 3):
     count=count+1
 
 #Results
-textbox("Your movie:\n Genre: "+genreChoice+"\n"
+msgbox("Your movie:\n Genre: "+genreChoice+"\n"
 +"Director: "+directorChoice+"\n"
 +"Actor 1: "+actorSel[1]+"\n"
 +"Actor 2: "+actorSel[2]+"\n"
 +"Actor 3: "+actorSel[3]+"\n"
-+"Total cost: "+str(spent))
++"Total cost: "+str(spent), ok_button="Done")
