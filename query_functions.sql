@@ -25,22 +25,22 @@ CREATE FUNCTION remaining_directors (budget BIGINT)
 LANGUAGE plpgsql;
 
 -- Returns list of hirable actor_id and sample movie title matching actor name
-CREATE FUNCTION match_name_actor (budget BIGINT, match_name VARCHAR(100)) 
+CREATE FUNCTION match_name_actor (rem_budget BIGINT, match_name VARCHAR(100)) 
 	RETURNS TABLE (actor_id int, movie_name VARCHAR(50)) as $$
 	BEGIN
 		return query select distinct on (a.actor_id) a.actor_id, m.movie_title
 		from actor as a, movie as m, stars as s
-		where s.actor_id = a.actor_id and s.movie_id = m.movie_id and a.actor_name LIKE match_name and cost_of_hire(a.actor_id, 0) <= budget;
+		where s.actor_id = a.actor_id and s.movie_id = m.movie_id and a.actor_name LIKE match_name and cost_of_hire(a.actor_id, 0) <= rem_budget;
 	END; $$ 
 LANGUAGE plpgsql;
 
 -- Returns list of hirable director_id and sample movie title matching director name
-CREATE FUNCTION match_name_director (budget BIGINT, match_name VARCHAR(100)) 
+CREATE FUNCTION match_name_director (rem_budget BIGINT, match_name VARCHAR(100)) 
 	RETURNS TABLE (director_id int, movie_name VARCHAR(50)) as $$
 	BEGIN
 		return query select distinct on (d.director_id) d.director_id, m.movie_title
 		from director as d, movie as m
-		where d.director_name LIKE match_name and cost_of_hire(d.director_id, 1) <= budget and m.director_id = d.director_id;
+		where d.director_name LIKE match_name and cost_of_hire(d.director_id, 1) <= rem_budget and m.director_id = d.director_id;
 	END; $$ 
 LANGUAGE plpgsql;
 
