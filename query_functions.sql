@@ -44,6 +44,16 @@ CREATE FUNCTION match_name_director (rem_budget BIGINT, match_name VARCHAR(100))
 	END; $$ 
 LANGUAGE plpgsql;
 
+-- Returns list of genres in databasse
+CREATE FUNCTION list_genres () 
+	RETURNS TABLE (genres VARCHAR(20)) as $$
+	BEGIN
+		return query select distinct g.genre
+		from genre as g
+		order by g.genre asc;
+	END; $$ 
+LANGUAGE plpgsql;
+
 -- Determines budget based on genre (as average of the budget of all movies in database of that genre)
 CREATE FUNCTION make_budget (picked_genre VARCHAR(20), out new_budget BIGINT)
 	RETURNS BIGINT as $$
