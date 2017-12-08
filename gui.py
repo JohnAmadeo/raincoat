@@ -1,41 +1,59 @@
 import easygui
 from easygui import *
+import urlparse
+import psycopg2
+
+db_url = "postgres://flnagkaphunlzd:58d06cddda4a7bb84af165d0e61a1268fa8d6bdb13fc401f0d999487203a504e@ec2-174-129-227-116.compute-1.amazonaws.com:5432/dddk3nffa4e1qb"
+urlparse.uses_netloc.append("postgres")
+url = urlparse.urlparse(db_url)
+
+conn = psycopg2.connect(
+    database=url.path[1:],
+    user=url.username,
+    password=url.password,
+    host=url.hostname,
+    port=url.port
+)
+
+cur = conn.cursor()
 
 def getPriceForGenre(genre):
-    return len(genre)*10
+    cur.execute("SELECT make_budget (%s);", (genre,))
+    return cur.fetchone()[0]
 
 #returns a list containing all possible genres
 def getGenres():
-    return ["Romance", "Tragedy", "Comedy"]
+    cur.execute("SELECT list_genres ();")
+    return [i[0] for i in cur.fetchall()]
 
 #returns a list of all possible directors given the budget remBudget
 def getDirectors(remBudget):
-    return ["Wes Anderson", "Spike Lee", "Tommy Wiseau"]
+    cur.execute("SELECT remaining_directors (%s);", (remBudget,))
+    return [i[0] for i in cur.fetchall()]
 
 #returns a list of all possible actors given the budget remBudget
 def getActors(remBudget):
     if remBudget<=0:
         return []
-    elif remBudget<30:
-        return ["Millie Bobbie Brown"]
-    return ["Millie Bobbie Brown", "Elizabeth Taylor", "Cary Grant"]
+    cur.execute("SELECT remaining_actors (%s);", (remBudget,))
+    return [i[0] for i in cur.fetchall()]
 
 #returns a list of all tuples (id, movie) for each person of the given name
 #given the budget remBudget
-def getPersonID(name, remBudget):
-    if(name=="Millie Bobbie Brown"):
-        return [(1, "Stranger Things"), (2, "Death")]
+def getPersonID(name, remBudget, isDirector):
+    if isDirector == 1:
+        cur.execute("SELECT match_name_director (%s, %s);", (remBudget, name))
     else:
-        return [(3, "Goonies")]
+        cur.execute("SELECT match_name_actor (%s, %s);", (remBudget, name))
+    p = [i[0][1:-2].split(",\"") for i in cur.fetchall()]
+    for i in p:
+        i[0] = int(i[0])
+    return p
 
 #given an id, return that person's cost
-def getPersonPrice(idNum):
-    if (idNum==1):
-        return 10
-    if (idNum==2):
-        return 20
-    if (idNum==3):
-        return 30
+def getPersonPrice(idNum, isDirector):
+    cur.execute("SELECT cost_of_hire (%s, %s);", (idNum, isDirector))
+    return cur.fetchone()[0]
 
 #Generates a bar showing how much money remains
 def remainingMoney(spent, budget):
@@ -53,22 +71,30 @@ def remainingMoney(spent, budget):
 #returns the metascore constribution of the person with the given id
 #dir=0 means actor, and 1=director
 #if the SQL function return is empty, return this function should return 0
-def ratingM(id, dir):
-    return 20
-    #if the return is empty, return 0
+def ratingM(id, isDirector):
+    if id == 0:
+        return 0
+    cur.execute("SELECT rating_generated_m (%s, %s);", (id, isDirector))
+    return cur.fetchone()[0]
 
 #returns the IMDB constribution of the person with the given id
 #dir=0 means actor, and 1=director
 #if the SQL function return is empty, return this function should return 0
-def ratingI(id, dir):
-    return 2
-#if the return is empty, return 0
+def ratingI(id, isDirector):
+    if id == 0:
+        return 0
+    cur.execute("SELECT rating_generated_i (%s, %s);", (id, isDirector))
+    return cur.fetchone()[0]
 
 #returns the revenue contribution of the person with the given id
 #dir=0 means actor, and 1=director
 #if the SQL function return is empty, return this function should return 0
-def revenue(id, dir):
-    return 200
+def revenue(id, isDirector):
+    #print id
+    if id == 0:
+        return 0
+    cur.execute("SELECT revenue (%s, %s);", (id, isDirector))
+    return cur.fetchone()[0]
 
 
 repeat=True
@@ -94,7 +120,7 @@ while(repeat==True):
         directorChoice=None
         while(directorChoice is None):
             directorChoice=choicebox(msg, title, directors) #director selection
-        idList=getPersonID(directorChoice, budget-spent)
+        idList=getPersonID(directorChoice, budget-spent, 1)
         if (len(idList)>1):
             movies=[tuple[1] for tuple in idList]
             msg=("There are multiple directors named "+directorChoice+
@@ -104,7 +130,7 @@ while(repeat==True):
         else:
             idNum=idList[0][0]
         pickedIDs[0]=idNum #add directorID
-        price=getPersonPrice(idNum)
+        price=getPersonPrice(idNum, 1)
         msg=("This director costs $"+str(price)+".\n"+
         "You will have $"+str(budget-price-spent)+" remaining.\n"+
         remainingMoney(spent+price, budget)+"\n"+
@@ -128,7 +154,7 @@ while(repeat==True):
             actorChoice=None
             while(actorChoice is None):
                 actorChoice=choicebox(msg, title, actors) #director selection
-            idList=getPersonID(actorChoice, budget-spent)
+            idList=getPersonID(actorChoice, budget-spent, 0)
             if (len(idList)>1):
                 movies=[tuple[1] for tuple in idList]
                 msg=("There are multiple actors named "+actorChoice+
@@ -138,7 +164,7 @@ while(repeat==True):
             elif (len(idList)==1):
                 idNum=idList[0][0]
             pickedIDs[count]=idNum #add actorID
-            price=getPersonPrice(idNum)
+            price=getPersonPrice(idNum, 0)
             msg=("This actor costs $"+str(price)+".\n"+
             "You will have $"+str(budget-price-spent)+" remaining.\n"+
             remainingMoney(spent+price, budget)+"\n"+
@@ -152,14 +178,14 @@ while(repeat==True):
     imdbRating=ratingI(pickedIDs[0], 1)+ratingI(pickedIDs[1], 0)+ratingI(pickedIDs[2], 0)+ratingI(pickedIDs[3], 0)
     metaRating=ratingM(pickedIDs[0], 1)+ratingM(pickedIDs[1], 0)+ratingM(pickedIDs[2], 0)+ratingM(pickedIDs[3], 0)
     revenue=revenue(pickedIDs[0], 1)+revenue(pickedIDs[1], 0)+revenue(pickedIDs[2], 0)+revenue(pickedIDs[3], 0)
-    msgbox("Your movie:\n Genre: "+genreChoice+"\n"
+    msgbox("Your movie:\nGenre: "+genreChoice+"\n"
     +"Director: "+directorChoice+"\n"
     +"Actor 1: "+actorSel[1]+"\n"
     +"Actor 2: "+actorSel[2]+"\n"
     +"Actor 3: "+actorSel[3]+"\n"
     +"Total cost: "+str(spent)+"\n\n"
-    +"IMDB Rating:"+str(imdbRating)+"\n"
-    +"MetaCritic Rating:"+str(metaRating)+"\n"
+    +"IMDB Rating: "+str(imdbRating)+"\n"
+    +"MetaCritic Rating: "+str(metaRating)+"\n"
     +"Revenue: $"+str(revenue)+"\n", ok_button="Done")
 
     repeat=ynbox("Thank you for playing! Would you like to play again?")

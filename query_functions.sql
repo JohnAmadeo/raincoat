@@ -10,7 +10,8 @@ CREATE FUNCTION remaining_actors (budget BIGINT)
 	BEGIN
 		return query select distinct a.actor_name
 		from actor as a
-		where cost_of_hire(a.actor_id, 0) <= budget;
+		where cost_of_hire(a.actor_id, 0) <= budget
+		order by a.actor_name asc;
 	END; $$ 
 LANGUAGE plpgsql;
 
@@ -20,7 +21,8 @@ CREATE FUNCTION remaining_directors (budget BIGINT)
 	BEGIN
 		return query select distinct d.director_name
 		from director as d
-		where cost_of_hire(d.director_id, 1) <= budget;
+		where cost_of_hire(d.director_id, 1) <= budget
+		order by d.director_name asc;
 	END; $$ 
 LANGUAGE plpgsql;
 
