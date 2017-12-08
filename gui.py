@@ -121,7 +121,7 @@ while(repeat==True):
         genreChoice=choicebox(msg, title, genres) #genre selection
 
     budget=getPriceForGenre(genreChoice)
-    msg=("Your budget is now $"+str(budget)+".\n"+
+    msg=("Your hiring budget is now $"+str(budget)+".\n"+
         remainingMoney(spent, budget))
     msgbox(msg)
 
