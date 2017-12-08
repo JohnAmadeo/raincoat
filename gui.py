@@ -97,8 +97,22 @@ def revenue(id, isDirector):
     return cur.fetchone()[0]
 
 
+#Welcome Message, game explanation
+msg=("Welcome, producer! The glorious world of film awaits you. "
++"In this game, you will create a movie. You will pick the genre, "
++"the director and three actors to star in your film. Make sure you"
+" stay in your budget!\n"+
+"At the end of the game, we will tell you how successful your film is.\n"+
+"Let's begin." )
+msgbox(msg)
 repeat=True
 while(repeat==True):
+    spent=0
+    pickedIDs=[0]*5
+    actorSel=[" "]*4
+    imdbRating=0
+    metaRating=0
+    made=0
     msg="Pick a genre:"
     title="Movie Game"
     genres=getGenres()
@@ -107,15 +121,15 @@ while(repeat==True):
         genreChoice=choicebox(msg, title, genres) #genre selection
 
     budget=getPriceForGenre(genreChoice)
-    spent=0
     msg=("Your budget is now $"+str(budget)+".\n"+
         remainingMoney(spent, budget))
     msgbox(msg)
-    pickedIDs=[0]*5
+
     #Director
     repeatDirector=True
     while (repeatDirector==True):
-        msg="Pick a director (these are all directors you can afford):"
+        msg=("Pick a director (these are all directors you can afford):\n\n"+
+        "Type a letter to skip to that portion of the list.")
         directors=getDirectors(budget-spent)
         directorChoice=None
         while(directorChoice is None):
@@ -140,11 +154,11 @@ while(repeat==True):
             spent=spent+price
 
     count=1
-    actorSel=[" "]*4
     for x in range (0, 3):
         repeatActor=True
         while (repeatActor==True):
-            msg="Pick your actor #"+str(count)+" (these are all the ones you can afford):"
+            msg=("Pick your actor #"+str(count)+" (these are all the ones you can afford):\n\n"+
+            "Type a letter to skip to that portion of the list.")
             actors=getActors(budget-spent)
             if(len(actors)==0):
                 msg=("You have spent all of your money! You can't afford to hire an actor #"
@@ -177,15 +191,18 @@ while(repeat==True):
     #Results
     imdbRating=ratingI(pickedIDs[0], 1)+ratingI(pickedIDs[1], 0)+ratingI(pickedIDs[2], 0)+ratingI(pickedIDs[3], 0)
     metaRating=ratingM(pickedIDs[0], 1)+ratingM(pickedIDs[1], 0)+ratingM(pickedIDs[2], 0)+ratingM(pickedIDs[3], 0)
-    revenue=revenue(pickedIDs[0], 1)+revenue(pickedIDs[1], 0)+revenue(pickedIDs[2], 0)+revenue(pickedIDs[3], 0)
+    made=revenue(pickedIDs[0], 1)+revenue(pickedIDs[1], 0)+revenue(pickedIDs[2], 0)+revenue(pickedIDs[3], 0)
     msgbox("Your movie:\nGenre: "+genreChoice+"\n"
     +"Director: "+directorChoice+"\n"
     +"Actor 1: "+actorSel[1]+"\n"
     +"Actor 2: "+actorSel[2]+"\n"
     +"Actor 3: "+actorSel[3]+"\n"
     +"Total cost: "+str(spent)+"\n\n"
-    +"IMDB Rating: "+str(imdbRating)+"\n"
+    +"IMDB Rating: "+str(round(imdbRating,1))+"\n"
     +"MetaCritic Rating: "+str(metaRating)+"\n"
-    +"Revenue: $"+str(revenue)+"\n", ok_button="Done")
+    +"Revenue: $"+str(made)+"\n"
+    +"Profit: $"+str(made-spent)+"\n", ok_button="Done")
 
     repeat=ynbox("Thank you for playing! Would you like to play again?")
+
+msgbox("Enjoy your retirement, producer!", ok_button="Thank you, I shall.")
