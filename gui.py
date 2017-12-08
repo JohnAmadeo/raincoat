@@ -108,7 +108,7 @@ while(repeat==True):
 
     budget=getPriceForGenre(genreChoice)
     spent=0
-    msg=("Your budget is now $"+str(budget)+".\n"+
+    msg=("Your hiring budget is now $"+str(budget)+".\n"+
         remainingMoney(spent, budget))
     msgbox(msg)
     pickedIDs=[0]*5
