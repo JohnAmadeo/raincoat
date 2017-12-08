@@ -60,7 +60,7 @@ LANGUAGE plpgsql;
 CREATE FUNCTION make_budget (picked_genre VARCHAR(20), out new_budget BIGINT)
 	RETURNS BIGINT as $$
 	BEGIN
-		select avg(m.budget) into new_budget
+		select avg(m.budget) / 2 into new_budget
 		from movie as m, genre as g
 		where g.movie_id = m.movie_id and g.genre LIKE picked_genre;
 	END; $$ 
