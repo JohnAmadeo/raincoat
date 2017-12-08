@@ -101,7 +101,7 @@ def revenue(id, isDirector):
 msg=("Welcome, producer! The glorious world of film awaits you. "
 +"In this game, you will create a movie. You will pick the genre, "
 +"the director and three actors to star in your film. Make sure you"
-" stay in your budget!\n"+
+" stay in your budget!\n\n"+
 "At the end of the game, we will tell you how successful your film is.\n"+
 "Let's begin." )
 msgbox(msg)
